@@ -1,0 +1,20 @@
+[project]
+name = "stx-names"
+description = "On-Chain Username Registry Service for Stacks"
+authors = []
+telemetry = false
+cache_dir = "./.cache"
+requirements = []
+
+[contracts.username-registry]
+path = "contracts/username-registry.clar"
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
+

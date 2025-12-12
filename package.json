@@ -1,0 +1,28 @@
+{
+  "name": "stx-names",
+  "version": "1.0.0",
+  "description": "On-Chain Username Registry Service for Stacks",
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "clarinet:check": "clarinet check",
+    "clarinet:console": "clarinet console",
+    "deploy:devnet": "clarinet deployments apply -p deployments/default.devnet-plan.yaml",
+    "deploy:testnet": "node scripts/deploy-testnet.js",
+    "deploy:mainnet": "node scripts/deploy-mainnet.js"
+  },
+  "devDependencies": {
+    "@hirosystems/clarinet-sdk": "^2.4.0",
+    "@stacks/transactions": "^6.13.0",
+    "vitest": "^1.6.0",
+    "vitest-environment-clarinet": "^2.1.0"
+  },
+  "dependencies": {
+    "@stacks/blockchain-api-client": "^7.11.0",
+    "@stacks/network": "^6.13.0",
+    "dotenv": "^16.4.5"
+  }
+}
+
