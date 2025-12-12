@@ -37,4 +37,5 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+*.backup
 

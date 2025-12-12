@@ -4,12 +4,13 @@ import {
   ContractCallOptions,
 } from '@stacks/connect';
 import {
-  callReadOnlyFunction,
   cvToValue,
   stringAsciiCV,
   principalCV,
   uintCV,
   ClarityValue,
+  deserializeCV,
+  serializeCV,
 } from '@stacks/transactions';
 import { CONTRACT_ADDRESS, CONTRACT_NAME, getNetwork, getApiUrl } from '../config';
 
@@ -30,27 +31,88 @@ export const useContract = () => {
   const [error, setError] = useState<string | null>(null);
 
   const network = getNetwork();
+  const apiUrl = getApiUrl();
 
-  // Helper to call read-only functions
+  // Helper to call read-only functions using Stacks API
   const callReadOnly = useCallback(async (
     functionName: string,
     functionArgs: ClarityValue[] = []
   ) => {
+    if (!CONTRACT_ADDRESS) {
+      throw new Error('Contract address not configured. Please set VITE_CONTRACT_ADDRESS in frontend/.env');
+    }
+    
     try {
-      const result = await callReadOnlyFunction({
-        network,
-        contractAddress: CONTRACT_ADDRESS,
-        contractName: CONTRACT_NAME,
-        functionName,
-        functionArgs,
-        senderAddress: CONTRACT_ADDRESS,
+      // Convert Clarity values to hex strings for API
+      const args = functionArgs.map(arg => {
+        const serialized = serializeCV(arg);
+        const hex = Array.from(serialized)
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+        return '0x' + hex;
       });
-      return cvToValue(result);
-    } catch (err) {
-      console.error(`Error calling ${functionName}:`, err);
+
+      // Call Stacks API read-only endpoint (this endpoint supports CORS)
+      const response = await fetch(`${apiUrl}/v2/contracts/call-read/${CONTRACT_ADDRESS}/${CONTRACT_NAME}/${functionName}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sender: CONTRACT_ADDRESS,
+          arguments: args,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText };
+        }
+        throw new Error(errorData.error || errorData.reason || `API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Parse the result - API returns result in hex format
+      if (data.okay !== false && data.result) {
+        // Result is a hex string (with or without 0x prefix)
+        const hexString = data.result.startsWith('0x') ? data.result.slice(2) : data.result;
+        const bytes = new Uint8Array(hexString.length / 2);
+        for (let i = 0; i < hexString.length; i += 2) {
+          bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
+        }
+        const cv = deserializeCV(bytes);
+        return cvToValue(cv);
+      } else {
+        // Check for error in response
+        const errorMsg = data.error || data.reason || 'Contract call failed';
+        throw new Error(errorMsg);
+      }
+    } catch (err: any) {
+      // Only log errors in development, and provide helpful messages
+      if (import.meta.env.DEV) {
+        const errorMessage = err?.message || String(err);
+        if (errorMessage.includes('ERR_CONNECTION_REFUSED') || errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS')) {
+          console.warn(
+            `⚠️ Cannot connect to Stacks API at ${apiUrl}. ` +
+            `The contract may still be pending confirmation.`
+          );
+        } else if (errorMessage.includes('NoSuchContract')) {
+          console.warn(
+            `⚠️ Contract not found. The deployment transaction may still be pending. ` +
+            `Check: https://explorer.stacks.co/address/${CONTRACT_ADDRESS}?chain=testnet`
+          );
+        } else {
+          console.error(`Error calling ${functionName}:`, err);
+        }
+      }
       throw err;
     }
-  }, [network]);
+  }, [apiUrl]);
 
   // Check if username is available
   const isUsernameAvailable = useCallback(async (username: string): Promise<boolean> => {
@@ -141,6 +203,11 @@ export const useContract = () => {
     onFinish?: (txId: string) => void,
     onCancel?: () => void
   ) => {
+    if (!CONTRACT_ADDRESS) {
+      setError('Contract address not configured. Please set VITE_CONTRACT_ADDRESS in frontend/.env');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
 

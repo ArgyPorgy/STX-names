@@ -6,16 +6,48 @@ import './Stats.css';
 export const Stats: React.FC = () => {
   const [stats, setStats] = useState<ContractStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState<string | null>(null);
 
   const { getContractStats } = useContract();
+
+  // Check if contract address is configured
+  if (!CONTRACT_ADDRESS) {
+    return (
+      <section className="stats">
+        <div className="stats-container">
+          <div className="api-error-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <div className="error-content">
+              <strong>Contract Not Deployed</strong>
+              <p>
+                Deploy the contract to {NETWORK_TYPE} first, then set <code>VITE_CONTRACT_ADDRESS</code> in <code>frontend/.env</code>
+              </p>
+              <p className="error-hint">
+                Run: <code>npm run deploy:testnet</code> to deploy
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setApiError(null);
         const data = await getContractStats();
         setStats(data);
-      } catch (err) {
-        console.error('Failed to fetch stats:', err);
+      } catch (err: any) {
+        const errorMessage = err?.message || String(err);
+        if (errorMessage.includes('ERR_CONNECTION_REFUSED') || errorMessage.includes('Failed to fetch')) {
+          setApiError('connection');
+        } else {
+          setApiError('unknown');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -97,6 +129,25 @@ export const Stats: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {apiError === 'connection' && NETWORK_TYPE === 'devnet' && (
+          <div className="api-error-banner">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 8v4M12 16h.01" />
+            </svg>
+            <div className="error-content">
+              <strong>Local Devnet Not Running</strong>
+              <p>
+                Start a local Stacks devnet to view stats. Run in a terminal:
+              </p>
+              <code>clarinet devnet</code>
+              <p className="error-hint">
+                Or switch to <strong>testnet</strong> in your environment variables.
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="contract-info">
           <span className="contract-label">Contract Address</span>

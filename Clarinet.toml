@@ -8,6 +8,10 @@ requirements = []
 
 [contracts.username-registry]
 path = "contracts/username-registry.clar"
+# Note: This contract uses Clarity 4 features (stacks-block-time)
+# - Local devnet (epoch 2.05) doesn't support Clarity 4
+# - Testnet/Mainnet (epoch 2.1+) support Clarity 4
+# clarity_version is specified ONLY in deployment plans
 
 [repl.analysis]
 passes = ["check_checker"]

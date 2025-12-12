@@ -49,8 +49,30 @@ stx-names/
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v18+)
-- [Clarinet](https://github.com/hirosystems/clarinet) (v2.0+)
+- [Clarinet](https://github.com/hirosystems/clarinet) (v2.0+) - **Required for local devnet**
 - [Hiro Wallet](https://wallet.hiro.so/) browser extension
+
+### Installing Clarinet
+
+Clarinet is **not** an npm package. Install it using one of these methods:
+
+**Option 1: Using Homebrew (macOS/Linux)**
+```bash
+brew install clarinet
+```
+
+**Option 2: Using Cargo (Rust)**
+```bash
+cargo install clarinet-cli
+```
+
+**Option 3: Download Binary**
+Visit the [Clarinet releases page](https://github.com/hirosystems/clarinet/releases) and download the binary for your platform.
+
+**Verify installation:**
+```bash
+clarinet --version
+```
 
 ### Installation
 
@@ -64,9 +86,13 @@ npm install
 
 # Install frontend dependencies
 cd frontend && npm install && cd ..
+
+# Create .env file for deployment (optional, but recommended)
+# Create a .env file in the project root with your mnemonic:
+# DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"
 ```
 
-### Local Development
+### Development Setup
 
 1. **Check the contract syntax:**
    ```bash
@@ -78,15 +104,48 @@ cd frontend && npm install && cd ..
    npm test
    ```
 
-3. **Start the Clarinet console for interactive testing:**
+3. **Deploy to Testnet (Recommended):**
+   
+   The frontend is configured to use **testnet** by default. First, deploy your contract:
+   
    ```bash
-   clarinet console
+   # Set your testnet wallet mnemonic
+   export DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"
+   
+   # Deploy to testnet
+   npm run deploy:testnet
+   ```
+   
+   After deployment, update `frontend/.env` with your contract address:
+   ```env
+   VITE_NETWORK=testnet
+   VITE_CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS
    ```
 
 4. **Start the frontend:**
    ```bash
    cd frontend
    npm run dev
+   ```
+   
+   The frontend will connect to testnet automatically.
+
+### Alternative: Local Devnet
+
+If you prefer local development:
+
+1. **Start local devnet:**
+   ```bash
+   npm run devnet:start
+   # OR
+   clarinet devnet start
+   ```
+
+2. **Update frontend config:**
+   Create `frontend/.env`:
+   ```env
+   VITE_NETWORK=devnet
+   VITE_CONTRACT_ADDRESS=ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM
    ```
 
 ## Smart Contract
@@ -166,21 +225,50 @@ The test suite covers:
 
 ## Deployment
 
-### Testnet Deployment
+### Testnet Deployment (Recommended)
 
-1. Create a `.env` file in the root directory:
-   ```env
-   DEPLOYER_MNEMONIC=your twelve word mnemonic phrase here
+The frontend is configured to use testnet by default. Deploy your contract first:
+
+1. **Get testnet STX:**
+   - Visit the [testnet faucet](https://explorer.stacks.co/sandbox/faucet?chain=testnet)
+   - Request testnet STX for your wallet
+
+2. **Create a `.env` file in the project root:**
+   ```bash
+   # Create .env file
+   cat > .env << EOF
+   DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"
+   EOF
    ```
+   
+   Or manually create `.env` with:
+   ```env
+   DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"
+   ```
+   
+   ⚠️ **Important:** The `.env` file is already in `.gitignore` - never commit your mnemonic!
 
-2. Ensure your testnet wallet has STX (get from [testnet faucet](https://explorer.stacks.co/sandbox/faucet?chain=testnet))
-
-3. Deploy:
+3. **Deploy using Clarinet:**
    ```bash
    npm run deploy:testnet
    ```
+   
+   Or use the Node.js script:
+   ```bash
+   npm run deploy:testnet:script
+   ```
 
-4. Check deployment status:
+4. **Update frontend configuration:**
+   
+   After deployment, create `frontend/.env`:
+   ```env
+   VITE_NETWORK=testnet
+   VITE_CONTRACT_ADDRESS=YOUR_DEPLOYED_CONTRACT_ADDRESS.username-registry
+   ```
+   
+   Replace `YOUR_DEPLOYED_CONTRACT_ADDRESS` with your deployer address (e.g., `ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM`)
+
+5. **Check deployment status:**
    ```bash
    node scripts/check-deployment.js <txid> testnet
    ```
@@ -189,9 +277,14 @@ The test suite covers:
 
 ⚠️ **Warning:** Mainnet deployment uses real STX!
 
-1. Set up your `.env` with a mainnet-funded wallet
+1. **Add your mainnet mnemonic to `.env`:**
+   ```env
+   DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"
+   ```
+   
+   Make sure your wallet has enough STX for deployment fees.
 
-2. Deploy:
+2. **Deploy:**
    ```bash
    npm run deploy:mainnet
    ```

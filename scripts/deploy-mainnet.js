@@ -33,7 +33,11 @@ const CONTRACT_NAME = 'username-registry';
 async function getPrivateKey() {
   const mnemonic = process.env.DEPLOYER_MNEMONIC;
   if (!mnemonic) {
-    throw new Error('DEPLOYER_MNEMONIC environment variable is required');
+    throw new Error(
+      'DEPLOYER_MNEMONIC environment variable is required.\n' +
+      'Create a .env file in the project root with:\n' +
+      'DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"'
+    );
   }
 
   const { generateWallet } = await import('@stacks/wallet-sdk');
@@ -93,6 +97,7 @@ async function deployContract() {
       anchorMode: AnchorMode.Any,
       postConditionMode: PostConditionMode.Allow,
       fee: 500000n, // 0.5 STX fee for mainnet
+      clarityVersion: 4, // Use Clarity 4 for mainnet (epoch 2.1+)
     };
 
     console.log('📝 Creating deployment transaction...');

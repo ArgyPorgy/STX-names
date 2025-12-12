@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stacks/blockchain-api-client": "^8.13.5",
     "@stacks/connect": "^7.7.0",
     "@stacks/network": "^6.13.0",
     "@stacks/transactions": "^6.13.0",
@@ -23,4 +24,3 @@
     "vite": "^5.4.2"
   }
 }
-

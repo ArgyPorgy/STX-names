@@ -3,11 +3,12 @@ import { StacksMainnet, StacksTestnet, StacksMocknet } from '@stacks/network';
 // Network configuration
 export type NetworkType = 'mainnet' | 'testnet' | 'devnet';
 
-export const NETWORK_TYPE: NetworkType = (import.meta.env.VITE_NETWORK || 'devnet') as NetworkType;
+export const NETWORK_TYPE: NetworkType = (import.meta.env.VITE_NETWORK || 'testnet') as NetworkType;
 
 // Contract configuration
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || 'ST1PQHQKV0RJXZFY1DGX8MNSNYVE3VGZJSRTPGZGM';
-export const CONTRACT_NAME = 'username-registry';
+// Update this after deploying to testnet with your actual contract address
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '';
+export const CONTRACT_NAME = 'username-registry-v11';
 
 // Network instances
 export const getNetwork = () => {

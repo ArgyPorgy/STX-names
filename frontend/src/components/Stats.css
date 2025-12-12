@@ -118,6 +118,61 @@
   border-radius: var(--radius-sm);
 }
 
+.api-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-lg);
+  color: var(--color-warning);
+}
+
+.api-error-banner svg {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+.error-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.error-content strong {
+  font-size: 1rem;
+  color: var(--color-warning);
+}
+
+.error-content p {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.error-content code {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--color-text-primary);
+  margin: 0.25rem 0;
+}
+
+.error-hint {
+  font-size: 0.85rem !important;
+  color: var(--color-text-muted) !important;
+  margin-top: 0.5rem !important;
+}
+
 .contract-info {
   display: flex;
   flex-direction: column;
