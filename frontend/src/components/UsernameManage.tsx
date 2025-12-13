@@ -20,7 +20,9 @@ export const UsernameManage: React.FC = () => {
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [activeAction, setActiveAction] = useState<'transfer' | 'approve' | 'release' | null>(null);
   const [transferAddress, setTransferAddress] = useState('');
+  const [releaseUsernameInput, setReleaseUsernameInput] = useState('');
   const [txId, setTxId] = useState<string | null>(null);
+  const [releaseTxId, setReleaseTxId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch user's username on connect
@@ -107,6 +109,32 @@ export const UsernameManage: React.FC = () => {
           setActiveAction(null);
           setCurrentUsername(null);
           setUsernameInfo(null);
+        },
+        () => {
+          // Cancelled
+        }
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Release failed');
+    }
+  };
+
+  const handleReleaseByUsername = async () => {
+    if (!releaseUsernameInput.trim()) return;
+
+    setError(null);
+    setReleaseTxId(null);
+    try {
+      await releaseUsername(
+        releaseUsernameInput.trim().toLowerCase(),
+        (id) => {
+          setReleaseTxId(id);
+          setReleaseUsernameInput('');
+          // Refresh current username if it was released
+          if (currentUsername === releaseUsernameInput.trim().toLowerCase()) {
+            setCurrentUsername(null);
+            setUsernameInfo(null);
+          }
         },
         () => {
           // Cancelled
@@ -334,6 +362,66 @@ export const UsernameManage: React.FC = () => {
             )}
           </>
         )}
+
+        {/* Release Username by Input Section */}
+        <div className="release-by-username-section">
+          <div className="release-by-username-header">
+            <h3>Release Username</h3>
+            <p>Enter a username to release it. You must be the owner of the username.</p>
+          </div>
+          <div className="release-by-username-form">
+            <div className="input-wrapper">
+              <span className="input-prefix">@</span>
+              <input
+                type="text"
+                className="username-input"
+                placeholder="username"
+                value={releaseUsernameInput}
+                onChange={(e) => setReleaseUsernameInput(e.target.value.toLowerCase())}
+                maxLength={30}
+              />
+            </div>
+            <button
+              className="btn btn-release"
+              onClick={handleReleaseByUsername}
+              disabled={isLoading || !releaseUsernameInput.trim()}
+            >
+              {isLoading ? (
+                <>
+                  <span className="loading-spinner" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  </svg>
+                  Release Username
+                </>
+              )}
+            </button>
+          </div>
+          
+          {releaseTxId && (
+            <div className="tx-success animate-fade-in">
+              <svg className="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M8 12l3 3 5-6" />
+              </svg>
+              <div className="tx-info">
+                <span className="tx-label">Transaction submitted!</span>
+                <a
+                  href={getExplorerUrl(releaseTxId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="tx-link"
+                >
+                  View on Explorer →
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
