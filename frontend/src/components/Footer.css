@@ -1,8 +1,9 @@
 .footer {
   margin-top: auto;
   padding: 4rem 1.5rem 2rem;
-  background: var(--color-bg-primary);
+  background: linear-gradient(to top, var(--color-bg-secondary) 0%, transparent 100%);
   border-top: 1px solid var(--border-color);
+  position: relative;
 }
 
 .footer-content {
@@ -73,8 +74,28 @@
   transition: color var(--transition-fast);
 }
 
+.footer-section a {
+  position: relative;
+  width: fit-content;
+}
+
+.footer-section a::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-accent-gradient);
+  transition: width var(--transition-normal);
+}
+
 .footer-section a:hover {
   color: var(--color-accent-primary);
+}
+
+.footer-section a:hover::after {
+  width: 100%;
 }
 
 .footer-bottom {
