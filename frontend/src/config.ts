@@ -8,7 +8,7 @@ export const NETWORK_TYPE: NetworkType = (import.meta.env.VITE_NETWORK || 'testn
 // Contract configuration
 // Update this after deploying to testnet with your actual contract address
 export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '';
-export const CONTRACT_NAME = 'username-registry-v11';
+export const CONTRACT_NAME = 'username-registry-v12';
 
 // Network instances
 export const getNetwork = () => {

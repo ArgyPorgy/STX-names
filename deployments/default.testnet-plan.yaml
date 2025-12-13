@@ -9,7 +9,7 @@ plan:
     - id: 0
       transactions:
         - contract-publish:
-            contract-name: username-registry-v11
+            contract-name: username-registry-v12
             expected-sender: STZ2TS3SCXSX01ETASV9X0HNS3C9RZGXDBQ038TK
             cost: 113750
             path: contracts/username-registry.clar

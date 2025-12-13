@@ -28,7 +28,7 @@ const __dirname = dirname(__filename);
 
 // Configuration
 const NETWORK = new StacksMainnet();
-const CONTRACT_NAME = 'username-registry';
+const CONTRACT_NAME = 'username-registry-v2';
 
 async function getPrivateKey() {
   const mnemonic = process.env.DEPLOYER_MNEMONIC;

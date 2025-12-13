@@ -13,7 +13,7 @@
     "deploy:devnet": "clarinet deployments apply -p deployments/default.devnet-plan.yaml",
     "deploy:testnet": "./scripts/deploy-testnet-safe.sh",
     "deploy:testnet:script": "node scripts/deploy-testnet.js",
-    "deploy:mainnet": "node scripts/deploy-mainnet.js",
+    "deploy:mainnet": "./scripts/deploy-mainnet-safe.sh",
     "update:fee": "node scripts/update-registration-fee.js testnet"
   },
   "devDependencies": {

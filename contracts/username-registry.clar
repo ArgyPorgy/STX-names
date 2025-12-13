@@ -23,7 +23,10 @@
 ;; Data Maps
 (define-map usernames
     { username: (string-ascii 30) }
-    { owner: principal }
+    { 
+        owner: principal,
+        registered-at: uint
+    }
 )
 
 (define-map address-to-username
@@ -86,12 +89,33 @@
     (var-get contract-owner)
 )
 
+;; Clarity 4: Get username registration timestamp
+(define-read-only (get-username-registered-at (username (string-ascii 30)))
+    (match (map-get? usernames { username: username })
+        entry (some (get registered-at entry))
+        none
+    )
+)
+
+;; Clarity 4: Format principal as ASCII string using to-ascii?
+(define-read-only (get-owner-as-string (owner principal))
+    (to-ascii? owner)
+)
+
+;; Clarity 4: Format registration fee as ASCII string
+(define-read-only (get-registration-fee-as-string)
+    (to-ascii? (var-get registration-fee))
+)
+
 ;; Public Functions
 (define-public (register-username (username (string-ascii 30)))
     (let
         (
             (fee (var-get registration-fee))
             (caller tx-sender)
+            (owner-opt (var-get contract-owner))
+            ;; Clarity 4: Get current block timestamp
+            (current-time stacks-block-time)
         )
         ;; Validate username format
         (try! (validate-username username))
@@ -102,24 +126,25 @@
         ;; Check if caller already has a username
         (asserts! (not (has-username caller)) ERR_ALREADY_HAS_USERNAME)
         
-        ;; Transfer fee to contract owner (if set)
-        (if (> fee u0)
+        ;; Transfer registration fee to contract owner if set
+        (if (is-some owner-opt)
             (let
                 (
-                    (owner-opt (var-get contract-owner))
+                    (owner (unwrap-panic owner-opt))
                 )
-                (if (is-some owner-opt)
-                    (try! (stx-transfer? fee caller (unwrap-panic owner-opt)))
-                    true
-                )
+                ;; Transfer the exact fee amount
+                (try! (stx-transfer? fee caller owner))
             )
             true
         )
         
-        ;; Register the username
+        ;; Register the username with timestamp (Clarity 4: stacks-block-time)
         (map-set usernames
             { username: username }
-            { owner: caller }
+            { 
+                owner: caller,
+                registered-at: current-time
+            }
         )
         
         ;; Set reverse lookup
@@ -143,6 +168,7 @@
             (caller tx-sender)
             (username-entry (unwrap! (map-get? usernames { username: username }) ERR_USERNAME_NOT_FOUND))
             (current-owner (get owner username-entry))
+            (registered-at-time (get registered-at username-entry))
         )
         ;; Check caller is the owner
         (asserts! (is-eq caller current-owner) ERR_NOT_OWNER)
@@ -153,10 +179,13 @@
         ;; Check new owner doesn't already have a username
         (asserts! (not (has-username new-owner)) ERR_ALREADY_HAS_USERNAME)
         
-        ;; Update username ownership
+        ;; Update username ownership (preserve registration timestamp)
         (map-set usernames
             { username: username }
-            { owner: new-owner }
+            { 
+                owner: new-owner,
+                registered-at: registered-at-time
+            }
         )
         
         ;; Update reverse lookups

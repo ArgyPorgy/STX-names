@@ -1,0 +1,19 @@
+---
+id: 0
+name: Mainnet deployment
+network: mainnet
+stacks-node: "https://api.mainnet.hiro.so"
+bitcoin-node: "http://blockstack:blockstacksystem@bitcoind.mainnet.stacks.co:8332"
+plan:
+  batches:
+    - id: 0
+      transactions:
+        - contract-publish:
+            contract-name: username-registry-v2
+            expected-sender: SPZ2TS3SCXSX01ETASV9X0HNS3C9RZGXD94JKX3R
+            cost: 113750
+            path: contracts/username-registry.clar
+            anchor-block-only: true
+            clarity-version: 4
+      epoch: "2.1"
+
