@@ -8,7 +8,22 @@ export const NETWORK_TYPE: NetworkType = (import.meta.env.VITE_NETWORK || 'testn
 // Contract configuration
 // Update this after deploying to testnet with your actual contract address
 export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || '';
-export const CONTRACT_NAME = 'username-registry-v12';
+
+// Contract name varies by network
+export const CONTRACT_NAME = (() => {
+  const envName = import.meta.env.VITE_CONTRACT_NAME;
+  if (envName) return envName;
+  
+  // Default contract names by network
+  switch (NETWORK_TYPE) {
+    case 'mainnet':
+      return 'username-registry-v2'; // Mainnet contract
+    case 'testnet':
+      return 'username-registry-v12'; // Testnet contract
+    default:
+      return 'username-registry';
+  }
+})();
 
 // Network instances
 export const getNetwork = () => {

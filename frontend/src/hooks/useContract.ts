@@ -53,6 +53,9 @@ export const useContract = () => {
       });
 
       // Call Stacks API read-only endpoint (this endpoint supports CORS)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+      
       const response = await fetch(`${apiUrl}/v2/contracts/call-read/${CONTRACT_ADDRESS}/${CONTRACT_NAME}/${functionName}`, {
         method: 'POST',
         headers: {
@@ -62,7 +65,10 @@ export const useContract = () => {
           sender: CONTRACT_ADDRESS,
           arguments: args,
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -93,23 +99,33 @@ export const useContract = () => {
         throw new Error(errorMsg);
       }
     } catch (err: any) {
-      // Only log errors in development, and provide helpful messages
+      // Suppress repeated network errors to reduce console noise
+      const errorMessage = err?.message || String(err);
+      
+      if (err.name === 'AbortError') {
+        throw new Error('Request timeout');
+      }
+      
+      if (errorMessage.includes('ERR_NETWORK_CHANGED') || 
+          errorMessage.includes('ERR_TIMED_OUT') ||
+          errorMessage.includes('Failed to fetch') ||
+          errorMessage.includes('Network error')) {
+        // Suppress repeated network errors - they're usually transient
+        throw new Error('Network error');
+      }
+      
+      // Only log other errors in development
       if (import.meta.env.DEV) {
-        const errorMessage = err?.message || String(err);
-        if (errorMessage.includes('ERR_CONNECTION_REFUSED') || errorMessage.includes('Failed to fetch') || errorMessage.includes('CORS')) {
+        if (errorMessage.includes('NoSuchContract')) {
           console.warn(
-            `⚠️ Cannot connect to Stacks API at ${apiUrl}. ` +
-            `The contract may still be pending confirmation.`
+            `⚠️ Contract not found: ${CONTRACT_ADDRESS}.${CONTRACT_NAME}. ` +
+            `The deployment transaction may still be pending.`
           );
-        } else if (errorMessage.includes('NoSuchContract')) {
-          console.warn(
-            `⚠️ Contract not found. The deployment transaction may still be pending. ` +
-            `Check: https://explorer.stacks.co/address/${CONTRACT_ADDRESS}?chain=testnet`
-          );
-        } else {
+        } else if (!errorMessage.includes('Network error')) {
           console.error(`Error calling ${functionName}:`, err);
         }
       }
+      
       throw err;
     }
   }, [apiUrl]);
