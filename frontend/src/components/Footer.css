@@ -1,7 +1,7 @@
 .footer {
   margin-top: auto;
   padding: 4rem 1.5rem 2rem;
-  background: linear-gradient(to top, var(--color-bg-secondary) 0%, transparent 100%);
+  background: var(--color-bg-secondary);
   border-top: 1px solid var(--border-color);
   position: relative;
 }
@@ -32,15 +32,16 @@
 .footer-logo span {
   font-size: 1.25rem;
   font-weight: 700;
-  background: var(--color-accent-gradient);
+  background: var(--color-accent-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .footer-tagline {
-  color: var(--color-text-muted);
+  color: #ffffff;
   font-size: 0.95rem;
+  opacity: 0.7;
 }
 
 .footer-links {
@@ -61,14 +62,14 @@
 .footer-section h4 {
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--color-accent-primary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.25rem;
 }
 
 .footer-section a {
-  color: var(--color-text-secondary);
+  color: #ffffff;
   text-decoration: none;
   font-size: 0.95rem;
   transition: color var(--transition-fast);
@@ -86,7 +87,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background: var(--color-accent-gradient);
+  background: var(--color-accent-primary);
   transition: width var(--transition-normal);
 }
 
@@ -108,7 +109,8 @@
 }
 
 .footer-year {
-  color: var(--color-text-secondary);
+  color: #ffffff;
+  opacity: 0.7;
 }
 
 @media (max-width: 768px) {

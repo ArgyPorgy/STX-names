@@ -8,14 +8,8 @@ export const Footer: React.FC = () => {
         <div className="footer-brand">
           <div className="footer-logo">
             <svg viewBox="0 0 100 100" className="footer-logo-svg">
-              <defs>
-                <linearGradient id="footerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#5546ff" />
-                  <stop offset="100%" stopColor="#fc6432" />
-                </linearGradient>
-              </defs>
-              <circle cx="50" cy="50" r="48" fill="url(#footerGrad)" />
-              <text x="50" y="65" fontFamily="Arial Black" fontSize="36" fontWeight="bold" fill="white" textAnchor="middle">STX</text>
+              <circle cx="50" cy="50" r="48" fill="#fc6432" />
+              <text x="50" y="65" fontFamily="Arial Black" fontSize="36" fontWeight="bold" fill="#000000" textAnchor="middle">STX</text>
             </svg>
             <span>STX Names</span>
           </div>

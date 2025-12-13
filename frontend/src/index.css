@@ -1,36 +1,36 @@
 :root {
-  /* Core colors - Stacks inspired with unique twist */
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-tertiary: #1a1a26;
-  --color-bg-card: rgba(26, 26, 38, 0.7);
-  --color-bg-hover: rgba(85, 70, 255, 0.1);
+  /* Simplified 2-color palette */
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #000000;
+  --color-bg-tertiary: #000000;
+  --color-bg-card: rgba(0, 0, 0, 0.8);
+  --color-bg-hover: rgba(252, 100, 50, 0.1);
   
-  /* Accent colors */
-  --color-accent-primary: #5546ff;
+  /* Accent color - orange */
+  --color-accent-primary: #fc6432;
   --color-accent-secondary: #fc6432;
-  --color-accent-gradient: linear-gradient(135deg, #5546ff 0%, #fc6432 100%);
-  --color-accent-glow: rgba(85, 70, 255, 0.4);
+  --color-accent-gradient: #fc6432;
+  --color-accent-glow: rgba(252, 100, 50, 0.4);
   
-  /* Text colors */
-  --color-text-primary: #f5f5f7;
-  --color-text-secondary: #a0a0b0;
-  --color-text-muted: #6b6b80;
+  /* Text colors - white primary, orange for highlights */
+  --color-text-primary: #ffffff;
+  --color-text-secondary: rgba(255, 255, 255, 0.8);
+  --color-text-muted: rgba(255, 255, 255, 0.6);
   
-  /* Status colors */
-  --color-success: #10b981;
-  --color-error: #ef4444;
-  --color-warning: #f59e0b;
+  /* Status colors - orange variants */
+  --color-success: #fc6432;
+  --color-error: #fc6432;
+  --color-warning: #fc6432;
   
   /* Borders */
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-color-hover: rgba(85, 70, 255, 0.4);
+  --border-color: rgba(252, 100, 50, 0.2);
+  --border-color-hover: rgba(252, 100, 50, 0.6);
   
   /* Shadows */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.5);
-  --shadow-glow: 0 0 40px rgba(85, 70, 255, 0.3);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 40px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 40px rgba(252, 100, 50, 0.3);
   
   /* Typography */
   --font-display: 'Outfit', system-ui, sans-serif;
@@ -85,14 +85,11 @@ body::before {
   right: 0;
   bottom: 0;
   background: 
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(85, 70, 255, 0.2) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(252, 100, 50, 0.15) 0%, transparent 60%),
-    radial-gradient(ellipse 50% 30% at 20% 80%, rgba(85, 70, 255, 0.1) 0%, transparent 50%),
-    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(252, 100, 50, 0.1) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(252, 100, 50, 0.08) 0%, transparent 60%),
+    url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23fc6432' fill-opacity='0.02'%3E%3Ccircle cx='30' cy='30' r='1.5'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
   pointer-events: none;
   z-index: -1;
-  animation: gradientShift 20s ease infinite;
-  background-size: 200% 200%, 200% 200%, 200% 200%, 60px 60px;
 }
 
 #root {
@@ -128,7 +125,7 @@ main {
 /* Selection */
 ::selection {
   background: var(--color-accent-primary);
-  color: white;
+  color: #000000;
 }
 
 /* Focus styles */
