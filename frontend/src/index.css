@@ -67,6 +67,13 @@ body {
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  cursor: none; /* Hide default cursor when custom cursor is available */
+}
+
+@media (hover: none) and (pointer: coarse) {
+  body {
+    cursor: auto; /* Show default cursor on touch devices */
+  }
 }
 
 /* Background pattern */
