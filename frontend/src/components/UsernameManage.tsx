@@ -21,37 +21,64 @@ export const UsernameManage: React.FC = () => {
   const [activeAction, setActiveAction] = useState<'transfer' | 'approve' | 'release' | null>(null);
   const [transferAddress, setTransferAddress] = useState('');
   const [releaseUsernameInput, setReleaseUsernameInput] = useState('');
-  const [txId, setTxId] = useState<string | null>(null);
   const [releaseTxId, setReleaseTxId] = useState<string | null>(null);
+  const [txId, setTxId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch user's username on connect
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchUsername = async () => {
       if (!address) {
-        setCurrentUsername(null);
-        setUsernameInfo(null);
+        if (isMounted) {
+          setCurrentUsername(null);
+          setUsernameInfo(null);
+          setIsLoadingData(false);
+        }
         return;
       }
 
-      setIsLoadingData(true);
+      if (isMounted) {
+        setIsLoadingData(true);
+      }
+      
       try {
         const username = await getAddressUsername(address);
-        setCurrentUsername(username);
+        if (isMounted) {
+          setCurrentUsername(username);
 
-        if (username) {
-          const info = await getUsernameInfo(username);
-          setUsernameInfo(info);
+          if (username) {
+            // Delay to avoid rate limiting (wait longer after first call)
+            setTimeout(async () => {
+              if (isMounted) {
+                try {
+                  const info = await getUsernameInfo(username);
+                  if (isMounted) {
+                    setUsernameInfo(info);
+                  }
+                } catch (err) {
+                  // Silently handle errors
+                }
+              }
+            }, 1500);
+          }
         }
       } catch (err) {
-        console.error('Failed to fetch username:', err);
+        // Silently handle errors (rate limiting, etc.)
       } finally {
-        setIsLoadingData(false);
+        if (isMounted) {
+          setIsLoadingData(false);
+        }
       }
     };
 
     fetchUsername();
-  }, [address, getAddressUsername, getUsernameInfo]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [address]); // Only depend on address, not the function references
 
   const handleTransfer = async () => {
     if (!currentUsername || !transferAddress.trim()) return;
@@ -119,19 +146,18 @@ export const UsernameManage: React.FC = () => {
     }
   };
 
-  const handleReleaseByUsername = async () => {
+  const handleReleaseByInput = async () => {
     if (!releaseUsernameInput.trim()) return;
 
     setError(null);
-    setReleaseTxId(null);
     try {
       await releaseUsername(
-        releaseUsernameInput.trim().toLowerCase(),
+        releaseUsernameInput.trim(),
         (id) => {
           setReleaseTxId(id);
           setReleaseUsernameInput('');
-          // Refresh current username if it was released
-          if (currentUsername === releaseUsernameInput.trim().toLowerCase()) {
+          // Update current username if it was released
+          if (releaseUsernameInput.trim() === currentUsername) {
             setCurrentUsername(null);
             setUsernameInfo(null);
           }
@@ -363,45 +389,39 @@ export const UsernameManage: React.FC = () => {
           </>
         )}
 
-        {/* Release Username by Input Section */}
-        <div className="release-by-username-section">
-          <div className="release-by-username-header">
-            <h3>Release Username</h3>
-            <p>Enter a username to release it. You must be the owner of the username.</p>
+        {/* Separate Release Username Section */}
+        <div className="release-section">
+          <div className="release-header">
+            <h3 className="release-section-title">Release Username</h3>
+            <p className="release-section-subtitle">
+              Type a username you own to release it. This action is permanent.
+            </p>
           </div>
-          <div className="release-by-username-form">
-            <div className="input-wrapper">
-              <span className="input-prefix">@</span>
-              <input
-                type="text"
-                className="username-input"
-                placeholder="username"
-                value={releaseUsernameInput}
-                onChange={(e) => setReleaseUsernameInput(e.target.value.toLowerCase())}
-                maxLength={30}
-              />
-            </div>
+          <div className="release-input-wrapper">
+            <span className="input-prefix">@</span>
+            <input
+              type="text"
+              className="release-input"
+              placeholder="username-to-release"
+              value={releaseUsernameInput}
+              onChange={(e) => setReleaseUsernameInput(e.target.value.toLowerCase())}
+              disabled={isLoading}
+            />
             <button
-              className="btn btn-release"
-              onClick={handleReleaseByUsername}
+              className="btn btn-danger"
+              onClick={handleReleaseByInput}
               disabled={isLoading || !releaseUsernameInput.trim()}
             >
               {isLoading ? (
                 <>
                   <span className="loading-spinner" />
-                  Processing...
+                  Releasing...
                 </>
               ) : (
-                <>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                  Release Username
-                </>
+                'Release Username'
               )}
             </button>
           </div>
-          
           {releaseTxId && (
             <div className="tx-success animate-fade-in">
               <svg className="success-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

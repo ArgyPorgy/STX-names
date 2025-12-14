@@ -9,24 +9,20 @@
     "test:coverage": "vitest run --coverage",
     "clarinet:check": "clarinet check",
     "clarinet:console": "clarinet console",
-    "devnet:start": "./scripts/start-devnet.sh",
     "deploy:devnet": "clarinet deployments apply -p deployments/default.devnet-plan.yaml",
-    "deploy:testnet": "./scripts/deploy-testnet-safe.sh",
-    "deploy:testnet:script": "node scripts/deploy-testnet.js",
-    "deploy:mainnet": "./scripts/deploy-mainnet-safe.sh",
-    "update:fee": "node scripts/update-registration-fee.js testnet"
+    "deploy:testnet": "node scripts/deploy-testnet.js",
+    "deploy:mainnet": "node scripts/deploy-mainnet.js"
   },
   "devDependencies": {
-    "@stacks/clarinet-sdk": "^3.10.0",
-    "@stacks/transactions": "^7.3.0",
-    "vitest": "^4.0.7",
-    "@stacks/connect": "^7.7.0",
-    "vitest-environment-clarinet": "3.0.2"
+    "@hirosystems/clarinet-sdk": "^2.4.0",
+    "@stacks/transactions": "^6.13.0",
+    "vitest": "^1.6.0",
+    "vitest-environment-clarinet": "^2.1.0"
   },
   "dependencies": {
     "@stacks/blockchain-api-client": "^7.11.0",
     "@stacks/network": "^6.13.0",
-    "@stacks/wallet-sdk": "^7.2.0",
     "dotenv": "^16.4.5"
   }
 }
+

@@ -1,16 +1,15 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import {
   openContractCall,
   ContractCallOptions,
 } from '@stacks/connect';
 import {
+  callReadOnlyFunction,
   cvToValue,
   stringAsciiCV,
   principalCV,
   uintCV,
   ClarityValue,
-  deserializeCV,
-  serializeCV,
 } from '@stacks/transactions';
 import { CONTRACT_ADDRESS, CONTRACT_NAME, getNetwork, getApiUrl } from '../config';
 
@@ -31,104 +30,54 @@ export const useContract = () => {
   const [error, setError] = useState<string | null>(null);
 
   const network = getNetwork();
-  const apiUrl = getApiUrl();
-
-  // Helper to call read-only functions using Stacks API
+  
+  // Rate limiting: track last request time using ref
+  const lastRequestTimeRef = useRef(0);
+  const MIN_REQUEST_INTERVAL = 1000; // 1000ms (1 second) between requests to avoid rate limiting
+  
+  // Helper to call read-only functions with rate limiting
   const callReadOnly = useCallback(async (
     functionName: string,
     functionArgs: ClarityValue[] = []
   ) => {
-    if (!CONTRACT_ADDRESS) {
-      throw new Error('Contract address not configured. Please set VITE_CONTRACT_ADDRESS in frontend/.env');
-    }
-    
     try {
-      // Convert Clarity values to hex strings for API
-      const args = functionArgs.map(arg => {
-        const serialized = serializeCV(arg);
-        const hex = Array.from(serialized)
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-        return '0x' + hex;
-      });
-
-      // Call Stacks API read-only endpoint (this endpoint supports CORS)
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
-      
-      const response = await fetch(`${apiUrl}/v2/contracts/call-read/${CONTRACT_ADDRESS}/${CONTRACT_NAME}/${functionName}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sender: CONTRACT_ADDRESS,
-          arguments: args,
-        }),
-        signal: controller.signal,
-      });
-      
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText };
-        }
-        throw new Error(errorData.error || errorData.reason || `API error: ${response.status}`);
+      // Rate limiting: wait if requests are too frequent
+      const now = Date.now();
+      const timeSinceLastRequest = now - lastRequestTimeRef.current;
+      if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+        await new Promise(resolve => setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest));
       }
+      lastRequestTimeRef.current = Date.now();
 
-      const data = await response.json();
-      
-      // Parse the result - API returns result in hex format
-      if (data.okay !== false && data.result) {
-        // Result is a hex string (with or without 0x prefix)
-        const hexString = data.result.startsWith('0x') ? data.result.slice(2) : data.result;
-        const bytes = new Uint8Array(hexString.length / 2);
-        for (let i = 0; i < hexString.length; i += 2) {
-          bytes[i / 2] = parseInt(hexString.substr(i, 2), 16);
-        }
-        const cv = deserializeCV(bytes);
-        return cvToValue(cv);
-      } else {
-        // Check for error in response
-        const errorMsg = data.error || data.reason || 'Contract call failed';
-        throw new Error(errorMsg);
-      }
+      const result = await callReadOnlyFunction({
+        network,
+        contractAddress: CONTRACT_ADDRESS,
+        contractName: CONTRACT_NAME,
+        functionName,
+        functionArgs,
+        senderAddress: CONTRACT_ADDRESS,
+      });
+      return cvToValue(result);
     } catch (err: any) {
-      // Suppress repeated network errors to reduce console noise
-      const errorMessage = err?.message || String(err);
-      
-      if (err.name === 'AbortError') {
-        throw new Error('Request timeout');
+      // Suppress 429 (rate limit) errors silently - they're expected when making many requests
+      const errorMessage = err?.message || err?.toString() || '';
+      if (
+        errorMessage.includes('429') || 
+        errorMessage.includes('Too Many Requests') ||
+        errorMessage.includes('CORS') ||
+        errorMessage.includes('Failed to fetch') ||
+        errorMessage.includes('ERR_FAILED')
+      ) {
+        // Silently return null/default values instead of throwing
+        // These errors are logged by the browser console but we handle them gracefully
+        return null;
       }
-      
-      if (errorMessage.includes('ERR_NETWORK_CHANGED') || 
-          errorMessage.includes('ERR_TIMED_OUT') ||
-          errorMessage.includes('Failed to fetch') ||
-          errorMessage.includes('Network error')) {
-        // Suppress repeated network errors - they're usually transient
-        throw new Error('Network error');
-      }
-      
-      // Only log other errors in development
-      if (import.meta.env.DEV) {
-        if (errorMessage.includes('NoSuchContract')) {
-          console.warn(
-            `⚠️ Contract not found: ${CONTRACT_ADDRESS}.${CONTRACT_NAME}. ` +
-            `The deployment transaction may still be pending.`
-          );
-        } else if (!errorMessage.includes('Network error')) {
-          console.error(`Error calling ${functionName}:`, err);
-        }
-      }
-      
-      throw err;
+      // Only log unexpected errors (shouldn't happen now)
+      // console.error(`Error calling ${functionName}:`, err);
+      // Don't throw - return null instead to prevent UI errors
+      return null;
     }
-  }, [apiUrl]);
+  }, [network]);
 
   // Check if username is available
   const isUsernameAvailable = useCallback(async (username: string): Promise<boolean> => {
@@ -180,19 +129,20 @@ export const useContract = () => {
     }
   }, [callReadOnly]);
 
-  // Get contract stats
+  // Get contract stats - sequential calls to avoid rate limiting
   const getContractStats = useCallback(async (): Promise<ContractStats> => {
     try {
-      const [totalUsernames, totalFeesCollected, registrationFee] = await Promise.all([
-        callReadOnly('get-total-usernames'),
-        callReadOnly('get-total-fees-collected'),
-        callReadOnly('get-registration-fee'),
-      ]);
+      // Call sequentially with delays to avoid rate limiting
+      const totalUsernames = await callReadOnly('get-total-usernames');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const totalFeesCollected = await callReadOnly('get-total-fees-collected');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const registrationFee = await callReadOnly('get-registration-fee');
 
       return {
-        totalUsernames: Number(totalUsernames),
-        totalFeesCollected: BigInt(totalFeesCollected as string),
-        registrationFee: BigInt(registrationFee as string),
+        totalUsernames: totalUsernames ? Number(totalUsernames) : 0,
+        totalFeesCollected: totalFeesCollected ? BigInt(totalFeesCollected as string) : BigInt(0),
+        registrationFee: registrationFee ? BigInt(registrationFee as string) : BigInt(1_000_000),
       };
     } catch {
       return {
@@ -219,11 +169,6 @@ export const useContract = () => {
     onFinish?: (txId: string) => void,
     onCancel?: () => void
   ) => {
-    if (!CONTRACT_ADDRESS) {
-      setError('Contract address not configured. Please set VITE_CONTRACT_ADDRESS in frontend/.env');
-      return;
-    }
-    
     setIsLoading(true);
     setError(null);
 

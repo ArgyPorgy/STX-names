@@ -17,10 +17,7 @@ import { StacksTestnet } from '@stacks/network';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { config } from 'dotenv';
-
-// Load .env file
-config();
+import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -32,11 +29,7 @@ const CONTRACT_NAME = 'username-registry';
 async function getPrivateKey() {
   const mnemonic = process.env.DEPLOYER_MNEMONIC;
   if (!mnemonic) {
-    throw new Error(
-      'DEPLOYER_MNEMONIC environment variable is required.\n' +
-      'Create a .env file in the project root with:\n' +
-      'DEPLOYER_MNEMONIC="your twelve word mnemonic phrase here"'
-    );
+    throw new Error('DEPLOYER_MNEMONIC environment variable is required');
   }
 
   // Import dynamically to avoid issues
@@ -72,7 +65,6 @@ async function deployContract() {
       anchorMode: AnchorMode.Any,
       postConditionMode: PostConditionMode.Allow,
       fee: 100000n, // 0.1 STX fee
-      clarityVersion: 4, // Use Clarity 4 for testnet (epoch 2.1+)
     };
 
     console.log('📝 Creating deployment transaction...');

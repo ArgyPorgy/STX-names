@@ -1,7 +1,6 @@
 [network]
 name = "mainnet"
 deployment_fee_rate = 10
-epoch = "2.1"
 
 [accounts.deployer]
 mnemonic = "${DEPLOYER_MNEMONIC}"

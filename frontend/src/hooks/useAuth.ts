@@ -1,22 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { AppConfig, UserSession, showConnect, disconnect } from '@stacks/connect';
-import { APP_METADATA, NETWORK_TYPE, getNetwork } from '../config';
+import { APP_METADATA } from '../config';
 
 const appConfig = new AppConfig(['store_write', 'publish_data']);
 const userSession = new UserSession({ appConfig });
-
-// Helper to get the correct address based on network
-const getAddressForNetwork = (userData: any): string | null => {
-  if (!userData?.profile?.stxAddress) return null;
-  
-  if (NETWORK_TYPE === 'testnet') {
-    return userData.profile.stxAddress.testnet || null;
-  } else if (NETWORK_TYPE === 'mainnet') {
-    return userData.profile.stxAddress.mainnet || null;
-  }
-  // For devnet, try testnet first, then mainnet
-  return userData.profile.stxAddress.testnet || userData.profile.stxAddress.mainnet || null;
-};
 
 export interface AuthState {
   isConnected: boolean;
@@ -36,7 +23,7 @@ export const useAuth = () => {
   useEffect(() => {
     if (userSession.isUserSignedIn()) {
       const userData = userSession.loadUserData();
-      const address = getAddressForNetwork(userData);
+      const address = userData.profile?.stxAddress?.testnet || userData.profile?.stxAddress?.mainnet;
       setAuthState({
         isConnected: true,
         isLoading: false,
@@ -45,7 +32,7 @@ export const useAuth = () => {
       });
     } else if (userSession.isSignInPending()) {
       userSession.handlePendingSignIn().then((userData) => {
-        const address = getAddressForNetwork(userData);
+        const address = userData.profile?.stxAddress?.testnet || userData.profile?.stxAddress?.mainnet;
         setAuthState({
           isConnected: true,
           isLoading: false,
@@ -69,10 +56,9 @@ export const useAuth = () => {
         name: APP_METADATA.name,
         icon: window.location.origin + APP_METADATA.icon,
       },
-      network: getNetwork(), // Specify the network (testnet/mainnet/devnet)
       onFinish: () => {
         const userData = userSession.loadUserData();
-        const address = getAddressForNetwork(userData);
+        const address = userData.profile?.stxAddress?.testnet || userData.profile?.stxAddress?.mainnet;
         setAuthState({
           isConnected: true,
           isLoading: false,
