@@ -5,22 +5,14 @@ import { handleRegisterUsernameEvent, handleTransferUsernameEvent, handleRelease
 
 const router = express.Router();
 
-// Middleware for chainhook webhook authentication
-function chainhookAuth(req: Request, res: Response, next: NextFunction) {
-  const authHeader = req.headers.authorization;
-  const secret = process.env.CHAINHOOKS_WEBHOOK_SECRET || 'default-secret';
-
-  if (authHeader === secret) {
-    next();
-  } else {
-    res.status(401).json({ error: 'Unauthorized' });
-  }
-}
-
-// Chainhook webhook endpoints
-router.post('/chainhooks/register-username', chainhookAuth, async (req: Request, res: Response) => {
+// Chainhook webhook endpoints (no auth middleware - chainhooks don't send auth headers by default)
+router.post('/chainhooks/register-username', async (req: Request, res: Response) => {
   try {
-    await handleRegisterUsernameEvent(req.body);
+    console.log('Received register-username webhook');
+    // Extract the event data from the chainhook wrapper structure
+    const eventData = req.body.event || req.body;
+    console.log('Event data structure:', Object.keys(eventData));
+    await handleRegisterUsernameEvent(eventData);
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error processing register-username webhook:', error);
@@ -28,9 +20,11 @@ router.post('/chainhooks/register-username', chainhookAuth, async (req: Request,
   }
 });
 
-router.post('/chainhooks/transfer-username', chainhookAuth, async (req: Request, res: Response) => {
+router.post('/chainhooks/transfer-username', async (req: Request, res: Response) => {
   try {
-    await handleTransferUsernameEvent(req.body);
+    console.log('Received transfer-username webhook');
+    const eventData = req.body.event || req.body;
+    await handleTransferUsernameEvent(eventData);
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error processing transfer-username webhook:', error);
@@ -38,9 +32,11 @@ router.post('/chainhooks/transfer-username', chainhookAuth, async (req: Request,
   }
 });
 
-router.post('/chainhooks/release-username', chainhookAuth, async (req: Request, res: Response) => {
+router.post('/chainhooks/release-username', async (req: Request, res: Response) => {
   try {
-    await handleReleaseUsernameEvent(req.body);
+    console.log('Received release-username webhook');
+    const eventData = req.body.event || req.body;
+    await handleReleaseUsernameEvent(eventData);
     res.json({ success: true });
   } catch (error: any) {
     console.error('Error processing release-username webhook:', error);
@@ -121,4 +117,29 @@ router.get('/stats', async (req: Request, res: Response) => {
   }
 });
 
+// Test endpoint to manually insert a username (for debugging)
+router.post('/test/insert-username', async (req: Request, res: Response) => {
+  try {
+    const { username, owner, txId, blockHeight, registeredAt } = req.body;
+    
+    if (!username || !owner) {
+      return res.status(400).json({ error: 'username and owner are required' });
+    }
+
+    const result = await db.insertUsername({
+      username,
+      owner,
+      txId: txId || 'test-tx-id',
+      blockHeight: blockHeight || 0,
+      registeredAt: registeredAt || Math.floor(Date.now() / 1000),
+    });
+
+    res.json({ success: true, data: result });
+  } catch (error: any) {
+    console.error('Error inserting test username:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;
+

@@ -9,11 +9,13 @@ export const chainhooksClient = new ChainhooksClient({
 export function createRegisterUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
   return {
     name: `${config.stacks.contractName}-register-username`,
+    version: '1',
     chain: 'stacks',
     network: config.stacks.network,
     filters: {
-      contract_calls: [
+      events: [
         {
+          type: 'contract_call',
           contract_identifier: `${config.stacks.contractAddress}.${config.stacks.contractName}`,
           function_name: 'register-username',
         },
@@ -21,11 +23,8 @@ export function createRegisterUsernameChainhook(startBlockHeight?: number): Chai
     },
     options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
-      http: {
-        url: `${config.server.apiBaseUrl}/api/chainhooks/register-username`,
-        method: 'POST',
-        authorization_header: process.env.CHAINHOOKS_WEBHOOK_SECRET || 'default-secret',
-      },
+      type: 'http_post',
+      url: `${config.server.apiBaseUrl}/api/chainhooks/register-username`,
     },
   };
 }
@@ -33,11 +32,13 @@ export function createRegisterUsernameChainhook(startBlockHeight?: number): Chai
 export function createTransferUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
   return {
     name: `${config.stacks.contractName}-transfer-username`,
+    version: '1',
     chain: 'stacks',
     network: config.stacks.network,
     filters: {
-      contract_calls: [
+      events: [
         {
+          type: 'contract_call',
           contract_identifier: `${config.stacks.contractAddress}.${config.stacks.contractName}`,
           function_name: 'transfer-username',
         },
@@ -45,11 +46,8 @@ export function createTransferUsernameChainhook(startBlockHeight?: number): Chai
     },
     options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
-      http: {
-        url: `${config.server.apiBaseUrl}/api/chainhooks/transfer-username`,
-        method: 'POST',
-        authorization_header: process.env.CHAINHOOKS_WEBHOOK_SECRET || 'default-secret',
-      },
+      type: 'http_post',
+      url: `${config.server.apiBaseUrl}/api/chainhooks/transfer-username`,
     },
   };
 }
@@ -57,11 +55,13 @@ export function createTransferUsernameChainhook(startBlockHeight?: number): Chai
 export function createReleaseUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
   return {
     name: `${config.stacks.contractName}-release-username`,
+    version: '1',
     chain: 'stacks',
     network: config.stacks.network,
     filters: {
-      contract_calls: [
+      events: [
         {
+          type: 'contract_call',
           contract_identifier: `${config.stacks.contractAddress}.${config.stacks.contractName}`,
           function_name: 'release-username',
         },
@@ -69,16 +69,17 @@ export function createReleaseUsernameChainhook(startBlockHeight?: number): Chain
     },
     options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
-      http: {
-        url: `${config.server.apiBaseUrl}/api/chainhooks/release-username`,
-        method: 'POST',
-        authorization_header: process.env.CHAINHOOKS_WEBHOOK_SECRET || 'default-secret',
-      },
+      type: 'http_post',
+      url: `${config.server.apiBaseUrl}/api/chainhooks/release-username`,
     },
   };
 }
 
 export async function registerAllChainhooks(startBlockHeight?: number) {
+  if (!config.chainhooks.apiKey) {
+    throw new Error('CHAINHOOKS_API_KEY is required. Please set it in your .env file.');
+  }
+
   try {
     console.log('Registering chainhooks...');
 
@@ -87,7 +88,7 @@ export async function registerAllChainhooks(startBlockHeight?: number) {
     const releaseHook = createReleaseUsernameChainhook(startBlockHeight);
 
     // Check if chainhooks already exist and delete them first
-    const existing = await chainhooksClient.getChainhooks({ limit: 100 });
+    const existing = await chainhooksClient.getChainhooks({ limit: 60 });
     for (const hook of existing.results) {
       if (
         hook.definition.name === registerHook.name ||
@@ -121,10 +122,41 @@ export async function registerAllChainhooks(startBlockHeight?: number) {
 
 export async function listChainhooks() {
   try {
-    const result = await chainhooksClient.getChainhooks({ limit: 100 });
+    const result = await chainhooksClient.getChainhooks({ limit: 60 });
     return result.results;
   } catch (error: any) {
     console.error('Error listing chainhooks:', error.message);
+    throw error;
+  }
+}
+
+export async function enableAllChainhooks() {
+  if (!config.chainhooks.apiKey) {
+    throw new Error('CHAINHOOKS_API_KEY is required. Please set it in your .env file.');
+  }
+
+  try {
+    const hooks = await listChainhooks();
+    const contractName = config.stacks.contractName;
+    
+    const targetHooks = hooks.filter(hook => 
+      hook.definition.name.startsWith(`${contractName}-`)
+    );
+
+    console.log(`Found ${targetHooks.length} chainhooks to enable...`);
+
+    for (const hook of targetHooks) {
+      if (!hook.status.enabled) {
+        await chainhooksClient.enableChainhook(hook.uuid, true);
+        console.log(`✓ Enabled chainhook: ${hook.definition.name}`);
+      } else {
+        console.log(`- Chainhook already enabled: ${hook.definition.name}`);
+      }
+    }
+
+    return targetHooks.map(h => h.uuid);
+  } catch (error: any) {
+    console.error('Error enabling chainhooks:', error.message);
     throw error;
   }
 }

@@ -217,3 +217,4 @@ export const db = {
     return result.rows;
   },
 };
+

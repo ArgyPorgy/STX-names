@@ -10,6 +10,20 @@ async function main() {
     console.log(`Base URL: ${config.chainhooks.baseUrl}`);
     console.log('');
 
+    // Validate API key is provided
+    if (!config.chainhooks.apiKey) {
+      console.error('❌ ERROR: CHAINHOOKS_API_KEY is not set!');
+      console.error('');
+      console.error('Please:');
+      console.error('1. Get your API key from https://platform.hiro.so/');
+      console.error('2. Add it to your .env file: CHAINHOOKS_API_KEY=your-key-here');
+      console.error('');
+      process.exit(1);
+    }
+
+    console.log('✓ API key found');
+    console.log('');
+
     // List existing chainhooks
     console.log('Checking existing chainhooks...');
     const existing = await listChainhooks();
@@ -31,6 +45,14 @@ async function main() {
     console.log(`Register hook UUID: ${result.register}`);
     console.log(`Transfer hook UUID: ${result.transfer}`);
     console.log(`Release hook UUID: ${result.release}`);
+    console.log('');
+    
+    // Enable the chainhooks
+    console.log('Enabling chainhooks...');
+    const { enableAllChainhooks } = await import('./chainhooks.js');
+    await enableAllChainhooks();
+    console.log('');
+    console.log('✓ All chainhooks enabled and ready!');
   } catch (error: any) {
     console.error('Error:', error.message);
     process.exit(1);
@@ -38,3 +60,4 @@ async function main() {
 }
 
 main();
+
