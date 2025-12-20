@@ -11,7 +11,15 @@
     "setup-db": "tsx src/setup-db.ts",
     "register-chainhooks": "tsx src/register-chainhooks.ts",
     "check-chainhooks": "tsx src/check-chainhooks.ts",
-    "enable-chainhooks": "tsx src/enable-chainhooks.ts"
+    "enable-chainhooks": "tsx src/enable-chainhooks.ts",
+    "test-webhooks": "tsx src/test-webhooks.ts",
+    "generate-chainhook-txs": "tsx src/generate-chainhook-txs.ts",
+    "diagnose-setup": "tsx src/diagnose-setup.ts",
+    "check-nonce": "tsx src/check-nonce.ts",
+    "fix-chainhooks": "tsx src/fix-chainhooks.ts",
+    "poll-transactions": "tsx src/poll-transactions.ts",
+    "generate-registers": "tsx src/generate-registers-only.ts",
+    "blast": "tsx src/blast-transactions.ts"
   },
   "dependencies": {
     "@hirosystems/chainhooks-client": "^1.0.0",
