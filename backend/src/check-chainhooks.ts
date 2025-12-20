@@ -17,6 +17,9 @@ async function main() {
       console.log(`UUID: ${hook.uuid}`);
       console.log(`Status: ${hook.status.status}`);
       console.log(`Enabled: ${hook.status.enabled}`);
+      if (hook.definition.action?.type === 'http_post' && hook.definition.action.url) {
+        console.log(`Webhook URL: ${hook.definition.action.url}`);
+      }
       console.log(`Last Evaluated Block: ${hook.status.last_evaluated_block_height || 'N/A'}`);
       console.log(`Occurrence Count: ${hook.status.occurrence_count}`);
       console.log(`Evaluated Block Count: ${hook.status.evaluated_block_count}`);

@@ -78,8 +78,12 @@ export async function handleRegisterUsernameEvent(event: ChainhookEvent): Promis
     }
 
     for (const apply of applyData) {
+      if (!apply.block_identifier) {
+        console.warn('Missing block_identifier in apply data, skipping...');
+        continue;
+      }
       const blockHeight = apply.block_identifier.index;
-      const timestamp = Math.floor(apply.timestamp / 1000); // Convert to seconds
+      const timestamp = Math.floor((apply.timestamp || Date.now()) / 1000); // Convert to seconds
 
       for (const tx of apply.transactions || []) {
         const txId = tx.transaction_identifier.hash;

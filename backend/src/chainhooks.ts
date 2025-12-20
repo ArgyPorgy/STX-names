@@ -7,7 +7,7 @@ export const chainhooksClient = new ChainhooksClient({
 });
 
 export function createRegisterUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
-  return {
+  const definition: ChainhookDefinition = {
     name: `${config.stacks.contractName}-register-username`,
     version: '1',
     chain: 'stacks',
@@ -21,16 +21,22 @@ export function createRegisterUsernameChainhook(startBlockHeight?: number): Chai
         },
       ],
     },
-    options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
       type: 'http_post',
       url: `${config.server.apiBaseUrl}/api/chainhooks/register-username`,
     },
   };
+  
+  // Only add options if startBlockHeight is provided
+  if (startBlockHeight) {
+    definition.options = { start_at_block_height: startBlockHeight };
+  }
+  
+  return definition;
 }
 
 export function createTransferUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
-  return {
+  const definition: ChainhookDefinition = {
     name: `${config.stacks.contractName}-transfer-username`,
     version: '1',
     chain: 'stacks',
@@ -44,16 +50,21 @@ export function createTransferUsernameChainhook(startBlockHeight?: number): Chai
         },
       ],
     },
-    options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
       type: 'http_post',
       url: `${config.server.apiBaseUrl}/api/chainhooks/transfer-username`,
     },
   };
+  
+  if (startBlockHeight) {
+    definition.options = { start_at_block_height: startBlockHeight };
+  }
+  
+  return definition;
 }
 
 export function createReleaseUsernameChainhook(startBlockHeight?: number): ChainhookDefinition {
-  return {
+  const definition: ChainhookDefinition = {
     name: `${config.stacks.contractName}-release-username`,
     version: '1',
     chain: 'stacks',
@@ -67,12 +78,17 @@ export function createReleaseUsernameChainhook(startBlockHeight?: number): Chain
         },
       ],
     },
-    options: startBlockHeight ? { start_at_block_height: startBlockHeight } : undefined,
     action: {
       type: 'http_post',
       url: `${config.server.apiBaseUrl}/api/chainhooks/release-username`,
     },
   };
+  
+  if (startBlockHeight) {
+    definition.options = { start_at_block_height: startBlockHeight };
+  }
+  
+  return definition;
 }
 
 export async function registerAllChainhooks(startBlockHeight?: number) {
@@ -88,16 +104,30 @@ export async function registerAllChainhooks(startBlockHeight?: number) {
     const releaseHook = createReleaseUsernameChainhook(startBlockHeight);
 
     // Check if chainhooks already exist and delete them first
-    const existing = await chainhooksClient.getChainhooks({ limit: 60 });
-    for (const hook of existing.results) {
-      if (
-        hook.definition.name === registerHook.name ||
-        hook.definition.name === transferHook.name ||
-        hook.definition.name === releaseHook.name
-      ) {
-        console.log(`Deleting existing chainhook: ${hook.definition.name}`);
-        await chainhooksClient.deleteChainhook(hook.uuid);
+    try {
+      const existing = await chainhooksClient.getChainhooks({ limit: 60 });
+      for (const hook of existing.results) {
+        if (
+          hook.definition.name === registerHook.name ||
+          hook.definition.name === transferHook.name ||
+          hook.definition.name === releaseHook.name
+        ) {
+          console.log(`Deleting existing chainhook: ${hook.definition.name}`);
+          try {
+            await chainhooksClient.deleteChainhook(hook.uuid);
+          } catch (error: any) {
+            // Ignore 404 errors (already deleted)
+            if (error.message.includes('404') || error.message.includes('Not Found')) {
+              console.log(`  (Already deleted, continuing...)`);
+            } else {
+              throw error;
+            }
+          }
+        }
       }
+    } catch (error: any) {
+      // If we can't list chainhooks, continue anyway - they might not exist
+      console.log(`Warning: Could not check existing chainhooks: ${error.message}`);
     }
 
     const registerResult = await chainhooksClient.registerChainhook(registerHook);
