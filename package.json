@@ -11,7 +11,9 @@
     "clarinet:console": "clarinet console",
     "deploy:devnet": "clarinet deployments apply -p deployments/default.devnet-plan.yaml",
     "deploy:testnet": "node scripts/deploy-testnet.js",
-    "deploy:mainnet": "node scripts/deploy-mainnet.js"
+    "deploy:mainnet": "node scripts/deploy-mainnet.js",
+    "deploy:counter:testnet": "node scripts/deploy-counter-testnet.js",
+    "deploy:counter:mainnet": "node scripts/deploy-counter-mainnet.js"
   },
   "devDependencies": {
     "@hirosystems/clarinet-sdk": "^2.4.0",
@@ -21,8 +23,8 @@
   },
   "dependencies": {
     "@stacks/blockchain-api-client": "^7.11.0",
-    "@stacks/network": "^6.13.0",
+    "@stacks/network": "6.17.0",
+    "@stacks/wallet-sdk": "^7.2.0",
     "dotenv": "^16.4.5"
   }
 }
-

@@ -315,7 +315,14 @@ MIT License - see LICENSE file for details.
 
 ## Resources
 
-- [Stacks Documentation](https://docs.stacks.co)
+### Documentation Links
+
+WalletConnect Docs: https://docs.walletconnect.network
+Reown WalletKit Docs: https://docs.reown.com
+Stacks Documentation: https://docs.stacks.co
+
+### Additional Resources
+
 - [Clarity Language Reference](https://docs.stacks.co/clarity)
 - [Clarinet Documentation](https://docs.hiro.so/clarinet)
 - [Stacks.js Documentation](https://stacks.js.org)

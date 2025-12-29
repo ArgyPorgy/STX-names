@@ -12,6 +12,7 @@ working_dir = "cache"
 [network]
 mode = "mainnet"
 bitcoind_rpc_url = "http://localhost:8332"
+# Note: These are for local development only. For production, use environment-specific configuration.
 bitcoind_rpc_username = "devnet"
 bitcoind_rpc_password = "devnet"
 

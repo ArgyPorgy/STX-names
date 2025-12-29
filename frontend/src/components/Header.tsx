@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { WalletSelector } from './WalletSelector';
 import './Header.css';
 
 export const Header: React.FC = () => {
-  const { isConnected, address, connect, disconnect, isLoading } = useAuth();
+  const { isConnected, address, disconnect, isLoading } = useAuth();
+  const [showWalletSelector, setShowWalletSelector] = useState(false);
 
   const truncateAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
@@ -50,7 +52,7 @@ export const Header: React.FC = () => {
               </button>
             </div>
           ) : (
-            <button className="btn btn-connect" onClick={connect}>
+            <button className="btn btn-connect" onClick={() => setShowWalletSelector(true)}>
               <svg className="wallet-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <rect x="2" y="6" width="20" height="14" rx="2" />
                 <path d="M2 10h20" />
@@ -61,6 +63,9 @@ export const Header: React.FC = () => {
           )}
         </div>
       </div>
+      {showWalletSelector && (
+        <WalletSelector onClose={() => setShowWalletSelector(false)} />
+      )}
     </header>
   );
 };
