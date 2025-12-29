@@ -1,0 +1,169 @@
+/**
+ * Mainnet Deployment Script for Counter Contract
+ * 
+ * ⚠️  WARNING: This deploys to MAINNET - real STX will be spent!
+ * 
+ * Prerequisites:
+ * 1. Set DEPLOYER_MNEMONIC environment variable with your mainnet wallet mnemonic
+ * 2. Ensure your mainnet wallet has enough STX for deployment fees
+ * 3. Double-check the contract code before deploying
+ * 4. Run: node scripts/deploy-mainnet.js
+ */
+
+import { 
+  makeContractDeploy, 
+  broadcastTransaction,
+  AnchorMode,
+  PostConditionMode,
+} from '@stacks/transactions';
+import { StacksMainnet } from '@stacks/network';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+import { createInterface } from 'readline';
+import 'dotenv/config';
+
+// Ensure global fetch is available
+if (typeof globalThis.fetch === 'undefined') {
+  try {
+    const { fetch, Request, Response, Headers } = await import('undici');
+    globalThis.fetch = fetch;
+    globalThis.Request = Request;
+    globalThis.Response = Response;
+    globalThis.Headers = Headers;
+  } catch (e) {
+    // undici not available, assume fetch is available (Node 18+)
+  }
+}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Configuration
+const NETWORK = new StacksMainnet();
+const CONTRACT_NAME = 'counter';
+
+// Ensure network has a client with fetch
+async function ensureNetworkClient() {
+  if (!NETWORK.client) {
+    const { createFetchFn } = await import('@stacks/network');
+    NETWORK.client = {
+      fetch: createFetchFn(),
+    };
+  } else if (!NETWORK.client.fetch) {
+    const { createFetchFn } = await import('@stacks/network');
+    NETWORK.client.fetch = createFetchFn();
+  }
+}
+
+async function getPrivateKey() {
+  const mnemonic = process.env.DEPLOYER_MNEMONIC;
+  if (!mnemonic) {
+    throw new Error('DEPLOYER_MNEMONIC environment variable is required');
+  }
+
+  const { generateWallet } = await import('@stacks/wallet-sdk');
+  const wallet = await generateWallet({
+    secretKey: mnemonic,
+    password: '',
+  });
+
+  return wallet.accounts[0].stxPrivateKey;
+}
+
+async function confirm(message) {
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  return new Promise((resolve) => {
+    rl.question(message, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'yes' || answer.toLowerCase() === 'y');
+    });
+  });
+}
+
+async function deployContract() {
+  console.log('');
+  console.log('⚠️  Counter Contract - MAINNET Deployment');
+  console.log('='.repeat(50));
+  console.log('');
+  console.log('🔴 WARNING: This will deploy to MAINNET!');
+  console.log('🔴 Real STX will be spent for transaction fees.');
+  console.log('');
+
+  const confirmed = await confirm('Are you sure you want to continue? (yes/no): ');
+  if (!confirmed) {
+    console.log('Deployment cancelled.');
+    process.exit(0);
+  }
+
+  // Ensure network client is configured
+  await ensureNetworkClient();
+
+  try {
+    // Read contract source
+    const contractPath = join(__dirname, '..', 'contracts', 'counter.clar');
+    const codeBody = readFileSync(contractPath, 'utf8');
+    console.log('✅ Contract source loaded');
+
+    // Get private key from mnemonic
+    const privateKey = await getPrivateKey();
+    console.log('✅ Private key derived from mnemonic');
+
+    // Create deploy transaction
+    const txOptions = {
+      contractName: CONTRACT_NAME,
+      codeBody,
+      senderKey: privateKey,
+      network: NETWORK,
+      anchorMode: AnchorMode.Any,
+      postConditionMode: PostConditionMode.Allow,
+      fee: 500000n, // 0.5 STX fee for mainnet
+    };
+
+    console.log('📝 Creating deployment transaction...');
+    const transaction = await makeContractDeploy(txOptions);
+
+    // Final confirmation
+    console.log('');
+    const finalConfirm = await confirm('Transaction ready. Broadcast to mainnet? (yes/no): ');
+    if (!finalConfirm) {
+      console.log('Deployment cancelled.');
+      process.exit(0);
+    }
+
+    // Broadcast transaction
+    console.log('📡 Broadcasting transaction to mainnet...');
+    const broadcastResponse = await broadcastTransaction(transaction, NETWORK);
+
+    if ('error' in broadcastResponse) {
+      throw new Error(`Broadcast failed: ${broadcastResponse.error} - ${broadcastResponse.reason}`);
+    }
+
+    const txId = broadcastResponse.txid;
+    console.log('');
+    console.log('✅ Contract deployment submitted to MAINNET!');
+    console.log('='.repeat(50));
+    console.log(`Transaction ID: ${txId}`);
+    console.log(`Explorer: https://explorer.stacks.co/txid/${txId}?chain=mainnet`);
+    console.log('');
+    console.log('⏳ Wait for transaction to be confirmed (usually ~10 minutes on mainnet)');
+    console.log('');
+
+    return txId;
+  } catch (error) {
+    console.error('❌ Deployment failed:', error.message);
+    if (error.stack) {
+      console.error('\nStack trace:');
+      console.error(error.stack);
+    }
+    process.exit(1);
+  }
+}
+
+// Run deployment
+deployContract();
+

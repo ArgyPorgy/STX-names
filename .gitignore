@@ -11,8 +11,9 @@ frontend/dist/
 .env
 .env.local
 .env.*.local
-frontend/.env
-frontend/.env.local
+**/.env
+**/.env.local
+**/.env.*.local
 
 # IDE
 .vscode/

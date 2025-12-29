@@ -5,3 +5,7 @@ const hook = createRegisterUsernameChainhook(5400691);
 console.log('Generated hook definition:');
 console.log(JSON.stringify(hook, null, 2));
 
+
+
+
+
